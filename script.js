@@ -617,7 +617,7 @@ async function loginUser() {
     if (response.ok) {
       localStorage.setItem("token", data.token);
       localStorage.setItem("loggedInUser", data.user.name);
-      window.location.href = "Dashboard.html";
+      window.location.href = "dashboard.html";
     } else {
       alert("Error: " + data.error);
     }
