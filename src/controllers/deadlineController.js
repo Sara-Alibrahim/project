@@ -1,10 +1,8 @@
-
 const Deadline = require('../models/Deadline');
 
-// --- 1. إضافة مهمة/اختبار جديد ---
 exports.addDeadline = async (req, res, next) => {
   try {
-    const { type, course, name, date } = req.body;
+    const { type, course, name, date, estimatedHours } = req.body;
 
     if (!type || !course || !name || !date) {
       return res.status(400).json({ error: 'الرجاء إدخال جميع الحقول' });
@@ -15,6 +13,7 @@ exports.addDeadline = async (req, res, next) => {
       course,
       name,
       date,
+      estimatedHours: estimatedHours && estimatedHours > 0 ? estimatedHours : 1,
       user: req.user.id 
     });
 
@@ -24,10 +23,9 @@ exports.addDeadline = async (req, res, next) => {
   }
 };
 
-// --- 2. عرض مهام الطالب المسجل دخوله ---
 exports.getDeadlines = async (req, res, next) => {
   try {
-    // جلب المهام وترتيبها حسب التاريخ (من الأقرب للأبعد)
+    
     const deadlines = await Deadline.find({ user: req.user.id }).sort({ date: 1 });
     res.status(200).json(deadlines);
   } catch (err) {
@@ -35,7 +33,6 @@ exports.getDeadlines = async (req, res, next) => {
   }
 };
 
-// --- 3. حذف مهمة ---
 exports.deleteDeadline = async (req, res, next) => {
   try {
     const deadline = await Deadline.findById(req.params.id);

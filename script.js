@@ -145,6 +145,13 @@ function buildSmartPlan(deadlines, availability) {
   days.forEach(d => { plan[d] = []; });
 
   const today = startOfToday();
+  
+  const todayIndex = today.getDay(); 
+  
+  const orderedDays = [];
+  for (let i = 0; i < 7; i++) {
+    orderedDays.push(days[(todayIndex + i) % 7]);
+  }
 
   upcoming.forEach(task => {
     let requiredHours = taskBudget[task.id] || 0;
@@ -156,8 +163,8 @@ function buildSmartPlan(deadlines, availability) {
     while (requiredHours > 0 && attempts < 7) {
       let allocatedInThisLoop = false;
 
-      for (let j = 0; j < days.length; j++) {
-        const day = days[j];
+      for (let j = 0; j < orderedDays.length; j++) {
+        const day = orderedDays[j];
 
         if (daySlots[day] > 0 && isTaskAvailableForPlanDay(task, day) && requiredHours > 0) {
           plan[day].push({

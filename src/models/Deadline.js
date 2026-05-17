@@ -1,11 +1,10 @@
-
 const mongoose = require('mongoose');
 
 const deadlineSchema = new mongoose.Schema({
   type: { 
     type: String, 
     required: true,
-    enum: ['Assignment', 'Exam'] // تحديد النوع كما هو في واجهتك
+    enum: ['Assignment', 'Exam'] 
   },
   course: { 
     type: String, 
@@ -20,7 +19,12 @@ const deadlineSchema = new mongoose.Schema({
     type: Date, 
     required: true 
   },
-  // ربط المهمة بالطالب الذي أضافها
+  estimatedHours: {
+    type: Number,
+    default: 1,
+    min: 1
+  },
+  
   user: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'User', 
