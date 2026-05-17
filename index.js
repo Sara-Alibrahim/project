@@ -24,11 +24,16 @@ app.use('/api/courses', courseRoutes);
 app.use('/api/deadlines', deadlineRoutes);
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(__dirname, 'singUp.html'));
 });
 
 app.get('/:page', (req, res) => {
-  const page = req.params.page;
+  let page = req.params.page;
+  
+  if (page.toLowerCase() === 'dashboard.html' || page.toLowerCase() === 'dashboard') {
+    return res.sendFile(path.join(__dirname, 'dashboard.html'));
+  }
+
   if (page.endsWith('.html')) {
     res.sendFile(path.join(__dirname, page));
   } else {

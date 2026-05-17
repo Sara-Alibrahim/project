@@ -142,7 +142,7 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
       localStorage.setItem("loggedInUser", data.user ? data.user.name : email);
       showMessage("Login successful", "success");
       setTimeout(() => {
-        window.location.href = "Dashboard.html";
+window.location.href = "dashboard.html";
       }, 1200);
     } else {
       showMessage(data.error || "Wrong email or password!", "error");
