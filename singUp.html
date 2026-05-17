@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login & Sign Up</title>
+<link rel="stylesheet" href="styleLogin.css">
+</head>
+
+<body>
+
+<div class="container" id="main-container">
+
+  <input type="checkbox" id="toggle">
+
+  <!-- MESSAGE -->
+  <div id="message" class="message"></div>
+
+  <!-- LOGIN -->
+  <div class="form-box login">
+    <h2>Login</h2>
+    <input type="text" id="login-username" placeholder="Username">
+    <input type="password" id="login-password" placeholder="Password">
+    <button id="loginBtn">Login</button>
+    <p>
+      Don't have an account?
+      <label for="toggle">Sign Up</label>
+    </p>
+  </div>
+
+  <!-- SIGNUP -->
+  <div class="form-box signup">
+    <h2>Sign Up</h2>
+    <input type="text" id="reg-username" placeholder="Username">
+    <input type="email" id="reg-email" placeholder="@gmail.com">
+    <input type="tel" id="reg-phone" placeholder="Phone Number">
+    <input type="password" id="reg-password" placeholder="Password">
+    <button id="registerBtn">Register</button>
+    <p>
+      Already have an account?
+      <label for="toggle">Login</label>
+    </p>
+  </div>
+
+  <!-- SIDE -->
+  <div class="side">
+    <div class="text login-text">
+      <h2>WELCOME BACK!</h2>
+      <p>We are happy to see you again.</p>
+    </div>
+    <div class="text signup-text">
+      <h2>HELLO FRIEND!</h2>
+      <p>Create your account and start your journey.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function showMessage(text, type) {
+  const msg = document.getElementById("message");
+  msg.innerText = text;
+  msg.className = "message " + type;
+  setTimeout(() => msg.classList.add("show"), 50);
+  setTimeout(() => msg.classList.remove("show"), 2000);
+  setTimeout(() => msg.innerText = "", 2500);
+}
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function isValidPhone(phone) {
+  return /^05\d{8}$/.test(phone);
+}
+
+/* ================= REGISTER ================= */
+document.getElementById("registerBtn").addEventListener("click", async () => {
+  const name = document.getElementById("reg-username").value.trim();
+  const email = document.getElementById("reg-email").value.trim();
+  const phone = document.getElementById("reg-phone").value.trim();
+  const password = document.getElementById("reg-password").value;
+
+  if (!name || !email || !phone || !password) {
+    return showMessage("Please fill in all fields", "error");
+  }
+
+  if (!isValidEmail(email)) {
+    return showMessage("Invalid email address", "error");
+  }
+
+  if (!phone.startsWith("05")) {
+    return showMessage("Phone number must start with 05", "error");
+  }
+
+  if (phone.length !== 10) {
+    return showMessage("Phone number must be 10 digits", "error");
+  }
+
+  try {
+    const response = await fetch('http://localhost:3000/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      showMessage("Registration successful! Please login.", "success");
+      setTimeout(() => {
+        document.getElementById('toggle').checked = false;
+      }, 1500);
+    } else {
+      showMessage(data.error || "Registration failed!", "error");
+    }
+  } catch (err) {
+    showMessage("Server error! Make sure backend is running.", "error");
+  }
+});
+
+/* ================= LOGIN ================= */
+document.getElementById("loginBtn").addEventListener("click", async () => {
+  const email = document.getElementById("login-username").value.trim();
+  const password = document.getElementById("login-password").value;
+
+  if (!email || !password) {
+    return showMessage("Please fill in all fields", "error");
+  }
+
+  try {
+    const response = await fetch('http://localhost:3000/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("loggedInUser", data.user ? data.user.name : email);
+      showMessage("Login successful", "success");
+      setTimeout(() => {
+        window.location.href = "Dashboard.html";
+      }, 1200);
+    } else {
+      showMessage(data.error || "Wrong email or password!", "error");
+    }
+  } catch (err) {
+    showMessage("Server error! Make sure backend is running.", "error");
+  }
+});
+</script>
+
+</body>
+</html>

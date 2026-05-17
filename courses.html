@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Courses</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body onload="loadUserProfile(); fetchCourses();">
+
+<div class="sidebar">
+  <h2>Study Planner</h2>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="courses.html" class="active">Courses</a>
+  <a href="deadlines.html">Deadlines</a>
+  <a href="availability.html">Weekly Plan</a>
+  <a href="statistics.html">Statistics</a>
+  <a href="index.html">Log out</a>
+</div>
+
+<div class="main">
+  <h1>📚 Courses</h1>
+  <div class="top-user">
+    <span id="userNameDisplay"></span>
+    <img id="userAvatar" class="user-avatar" src="female.png" alt="User">
+  </div>
+
+  <div class="course-stats">
+    <div class="stat-box">
+      <div class="number" id="totalCourses">0</div>
+      <div class="label">Total Courses</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="add-form">
+      <input type="text" id="courseName" placeholder="📖 Course Name">
+      <button onclick="addCourse()">+ Add Course</button>
+    </div>
+
+    <table id="table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Course Name</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <div id="emptyMsg" class="empty-hidden">
+      <span>📚</span>
+      <p>No courses added yet. Start by adding your first course!</p>
+    </div>
+  </div>
+</div>
+
+<script>
+
+let courses = [];
+
+async function fetchCourses() {
+  const token = localStorage.getItem("token");
+  if (!token) return;
+  try {
+    const response = await fetch('http://localhost:3000/api/courses', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (response.ok) {
+      courses = await response.json();
+      render();
+    }
+  } catch (err) {
+    console.log("Error fetching courses", err);
+  }
+}
+
+function isDuplicate(name, excludeId = null) {
+  return courses.some(c =>
+    c.name.toLowerCase() === name.toLowerCase() && c._id !== excludeId
+  );
+}
+
+function updateStats() {
+  document.getElementById("totalCourses").innerText = courses.length;
+}
+
+function render() {
+  const tbody = document.querySelector("#table tbody");
+  tbody.innerHTML = "";
+
+  if (courses.length === 0) {
+    document.getElementById("emptyMsg").style.display = "block";
+    document.querySelector("#table thead").style.display = "none";
+  } else {
+    document.getElementById("emptyMsg").style.display = "none";
+    document.querySelector("#table thead").style.display = "";
+  }
+
+  courses.forEach((c, index) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${index + 1}</td>
+      <td>
+        <span class="editable-course" ondblclick="enableEdit('${c._id}', this)">
+          ${c.name}
+        </span>
+      </td>
+      <td>
+        <button class="btn-delete" onclick="deleteCourse('${c._id}')">🗑 Delete</button>
+      </td>
+    `;
+    tbody.appendChild(row);
+  });
+
+  updateStats();
+}
+
+async function addCourse() {
+  const name = document.getElementById("courseName").value.trim();
+  const token = localStorage.getItem("token");
+
+  if (!name) {
+    showToast("Please enter a valid course name", "error");
+    return;
+  }
+
+  if (isDuplicate(name)) {
+    showToast("This course already exists!", "error");
+    return;
+  }
+
+  if (!token) {
+    showToast("Please login first", "error");
+    return;
+  }
+
+  try {
+    const response = await fetch('http://localhost:3000/api/courses', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ name })
+    });
+
+    if (response.ok) {
+      showToast("Course added successfully", "success");
+      document.getElementById("courseName").value = "";
+      fetchCourses();
+    } else {
+      const errorData = await response.json();
+      showToast("Error: " + (errorData.error || errorData.message), "error");
+    }
+  } catch (err) {
+    showToast("Server error", "error");
+  }
+}
+
+function deleteCourse(id) {
+  const modal = document.getElementById("confirmModal");
+  const confirmBtn = document.getElementById("confirmBtn");
+  document.getElementById("modalMessage").textContent = "Delete this course?";
+  modal.classList.add("active");
+  confirmBtn.onclick = async function() {
+    modal.classList.remove("active");
+    const token = localStorage.getItem("token");
+    try {
+      const response = await fetch(`http://localhost:3000/api/courses/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        showToast("Course deleted successfully", "success");
+        fetchCourses();
+      } else {
+        showToast("Failed to delete", "error");
+      }
+    } catch (err) {
+      showToast("Server error", "error");
+    }
+  };
+}
+
+function enableEdit(id, element) {
+  const course = courses.find(c => c._id === id);
+  element.innerHTML = `
+    <input
+      type="text"
+      id="editInput-${id}"
+      value="${course.name}"
+      class="edit-input"
+      onblur="saveCourse('${id}')"
+      onkeypress="handleKey(event, '${id}')"
+      autofocus
+    >
+  `;
+}
+
+function handleKey(event, id) {
+  if (event.key === "Enter") {
+    saveCourse(id);
+  }
+}
+
+async function saveCourse(id) {
+  const input = document.getElementById(`editInput-${id}`);
+  let newName = input.value.trim();
+
+  if (!newName) {
+    showToast("Course name cannot be empty", "error");
+    render();
+    return;
+  }
+
+  if (isDuplicate(newName, id)) {
+    showToast("This course already exists!", "error");
+    render();
+    return;
+  }
+
+  const token = localStorage.getItem("token");
+  try {
+    const response = await fetch(`http://localhost:3000/api/courses/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ name: newName })
+    });
+
+    if (response.ok) {
+      showToast("Course updated successfully", "success");
+      fetchCourses();
+    } else {
+      showToast("Failed to update course", "error");
+      render();
+    }
+  } catch (err) {
+    showToast("Server error", "error");
+    render();
+  }
+}
+
+function closeModal() {
+  document.getElementById("confirmModal").classList.remove("active");
+}
+
+</script>
+
+<script src="script.js"></script>
+
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box">
+    <p id="modalMessage">Are you sure?</p>
+    <div class="modal-buttons">
+      <button class="modal-btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-btn-confirm" id="confirmBtn">OK</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
