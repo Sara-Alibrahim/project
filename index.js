@@ -3,6 +3,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const path = require('path');
 
 const authRoutes = require('./src/routes/authRoutes');
 const courseRoutes = require('./src/routes/courseRoutes');
@@ -23,7 +24,16 @@ app.use('/api/courses', courseRoutes);
 app.use('/api/deadlines', deadlineRoutes);
 
 app.get('/', (req, res) => {
-  res.json({ message: 'Study Planner API is running...' });
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/:page', (req, res) => {
+  const page = req.params.page;
+  if (page.endsWith('.html')) {
+    res.sendFile(path.join(__dirname, page));
+  } else {
+    res.sendFile(path.join(__dirname, `${page}.html`));
+  }
 });
 
 const PORT = process.env.PORT || 3000;
