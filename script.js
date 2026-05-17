@@ -149,65 +149,58 @@ function buildSmartPlan(deadlines, availability) {
   const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const upcoming = getUpcomingDeadlines(deadlines);
   const taskBudget = {};
+  
   upcoming.forEach(t => {
     taskBudget[t.id] = getRequiredHours(t);
   });
+
+  const daySlots = {};
+  days.forEach(d => {
+    daySlots[d] = Number(availability[d] || 0);
+  });
+
   const plan = {};
   days.forEach(d => { plan[d] = []; });
-  days.forEach(day => {
-    let slotsLeft = Number(availability[day] || 0);
-    if (slotsLeft <= 0) return;
-    const availableForDay = upcoming.filter(t =>
-      isTaskAvailableForPlanDay(t, day) && (taskBudget[t.id] || 0) > 0
-    );
-    if (availableForDay.length === 0) return;
-    const today = startOfToday();
-    let i = 0;
-    while (slotsLeft > 0 && i < availableForDay.length) {
-      const task = availableForDay[i];
-      const due = parseLocalDate(task.date);
-      const daysLeft = due ? Math.max(Math.ceil((due - today) / (1000 * 60 * 60 * 24)), 0) : 999;
-      const sameDateTasks = availableForDay.filter(t => t.date === task.date && (taskBudget[t.id] || 0) > 0);
-      if (sameDateTasks.length > 1) {
-        const totalBudget = sameDateTasks.reduce((s, t) => s + taskBudget[t.id], 0);
-        const sharedSlots = Math.min(slotsLeft, totalBudget);
-        sameDateTasks.forEach(t => {
-          const share = Math.round((taskBudget[t.id] / totalBudget) * sharedSlots);
-          const actual = Math.min(share, taskBudget[t.id], slotsLeft);
-          for (let h = 0; h < actual; h++) {
-            plan[day].push({
-              course: t.course || "Study",
-              title: getTaskDisplayName(t),
-              date: t.date || "",
-              duration: "1h",
-              daysLeft,
-              priority: getPriorityLabel(t),
-              taskId: t.id
-            });
-          }
-          taskBudget[t.id] -= actual;
-          slotsLeft -= actual;
-        });
-        i += sameDateTasks.length;
-      } else {
-        const hoursToAssign = Math.min(taskBudget[task.id], slotsLeft);
-        for (let h = 0; h < hoursToAssign; h++) {
+
+  const today = startOfToday();
+
+  upcoming.forEach(task => {
+    let requiredHours = taskBudget[task.id] || 0;
+    const due = parseLocalDate(task.date);
+    const daysLeft = due ? Math.max(Math.ceil((due - today) / (1000 * 60 * 60 * 24)), 0) : 999;
+    const priority = getPriorityLabel(task);
+
+    let attempts = 0;
+    while (requiredHours > 0 && attempts < 7) {
+      let allocatedInThisLoop = false;
+
+      for (let j = 0; j < days.length; j++) {
+        const day = days[j];
+
+        if (daySlots[day] > 0 && isTaskAvailableForPlanDay(task, day) && requiredHours > 0) {
           plan[day].push({
             course: task.course || "Study",
             title: getTaskDisplayName(task),
             date: task.date || "",
             duration: "1h",
-            daysLeft,
-            priority: getPriorityLabel(task),
+            daysLeft: daysLeft,
+            priority: priority,
             taskId: task.id
           });
+
+          daySlots[day]--;
+          requiredHours--;
+          allocatedInThisLoop = true;
         }
-        taskBudget[task.id] -= hoursToAssign;
-        slotsLeft -= hoursToAssign;
-        i++;
       }
+
+      if (!allocatedInThisLoop) {
+        break;
+      }
+      attempts++;
     }
   });
+
   return plan;
 }
 
