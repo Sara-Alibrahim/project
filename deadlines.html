@@ -101,7 +101,7 @@ async function fetchDeadlines() {
   const token = localStorage.getItem("token");
   if (!token) return;
   try {
-    const response = await fetch('http://localhost:3000/api/deadlines', {
+    const response = await fetch('https://studyplanner-fcpg.onrender.com/api/deadlines', {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     if (response.ok) {
@@ -132,7 +132,7 @@ async function loadCoursesToSelect() {
 
   if (token) {
     try {
-      const response = await fetch('http://localhost:3000/api/courses', {
+      const response = await fetch('https://studyplanner-fcpg.onrender.com/api/courses', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) courses = await response.json();
@@ -263,7 +263,7 @@ async function addDeadline(type) {
 
   const token = localStorage.getItem("token");
   try {
-    const response = await fetch('http://localhost:3000/api/deadlines', {
+    const response = await fetch('https://studyplanner-fcpg.onrender.com/api/deadlines', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -304,7 +304,7 @@ async function deleteDeadline(id) {
   confirmBtn.onclick = async function() {
     modal.classList.remove("active");
     try {
-      const response = await fetch(`http://localhost:3000/api/deadlines/${id}`, {
+      const response = await fetch(`https://studyplanner-fcpg.onrender.com/api/deadlines/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

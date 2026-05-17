@@ -586,7 +586,7 @@ async function signUpUser() {
   const password = document.getElementById("reg-password").value;
 
   try {
-    const response = await fetch('http://localhost:3000/api/auth/register', {
+    const response = await fetch('https://studyplanner-fcpg.onrender.com/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email, password })
@@ -608,7 +608,7 @@ async function loginUser() {
   const password = document.getElementById("reg-password").value;
 
   try {
-    const response = await fetch('http://localhost:3000/api/auth/login', {
+    const response = await fetch('https://studyplanner-fcpg.onrender.com/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })

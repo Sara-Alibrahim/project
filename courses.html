@@ -64,7 +64,7 @@ async function fetchCourses() {
   const token = localStorage.getItem("token");
   if (!token) return;
   try {
-    const response = await fetch('http://localhost:3000/api/courses', {
+    const response = await fetch('https://studyplanner-fcpg.onrender.com/api/courses', {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     if (response.ok) {
@@ -137,7 +137,7 @@ async function addCourse() {
   }
 
   try {
-    const response = await fetch('http://localhost:3000/api/courses', {
+    const response = await fetch('https://studyplanner-fcpg.onrender.com/api/courses', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -168,7 +168,7 @@ function deleteCourse(id) {
     modal.classList.remove("active");
     const token = localStorage.getItem("token");
     try {
-      const response = await fetch(`http://localhost:3000/api/courses/${id}`, {
+      const response = await fetch(`https://studyplanner-fcpg.onrender.com/api/courses/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -223,7 +223,7 @@ async function saveCourse(id) {
 
   const token = localStorage.getItem("token");
   try {
-    const response = await fetch(`http://localhost:3000/api/courses/${id}`, {
+    const response = await fetch(`https://studyplanner-fcpg.onrender.com/api/courses/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
