@@ -113,24 +113,6 @@ function getUpcomingDeadlines(deadlines) {
     .sort((a, b) => parseLocalDate(a.date) - parseLocalDate(b.date));
 }
 
-function renderUpcomingReminder() {
-  const reminder = document.getElementById("upcomingReminder");
-  if (!reminder) return;
-  const { deadlines } = getWeeklyPlanData();
-  const upcoming = getUpcomingDeadlines(deadlines);
-  if (upcoming.length === 0) {
-    reminder.textContent = "✅ No upcoming tasks or deadlines.";
-    return;
-  }
-  const names = upcoming.slice(0, 3).map(task => {
-    const label = task.name || task.examName || task.course || "Task";
-    const course = task.course ? ` - ${task.course}` : "";
-    return `${label}${course}`;
-  }).join(", ");
-  const extra = upcoming.length > 3 ? ` and ${upcoming.length - 3} more` : "";
-  reminder.textContent = `⚠️ Reminder: Upcoming tasks: ${names}${extra}.`;
-}
-
 function getRequiredHours(task) {
   return task.estimatedHours && task.estimatedHours > 0 ? task.estimatedHours : 1;
 }
@@ -305,7 +287,6 @@ function initMergedAvailabilityPage() {
   renderAvailabilityStats();
   renderAvailabilityBars();
   loadSmartNotifications();
-  renderUpcomingReminder();
   const saveBtn = document.getElementById("saveAvailability");
   const planBtn = document.getElementById("generateWeeklyPlanBtn");
   if (saveBtn) saveBtn.onclick = saveMergedAvailability;
@@ -386,7 +367,6 @@ function generateMergedWeeklyPlan() {
   }
 
   days.forEach(day => {
-
     generatedPlan[day] = [];
     const dayCard = document.createElement("div");
     dayCard.className = "plan-day-card";
@@ -394,13 +374,17 @@ function generateMergedWeeklyPlan() {
     header.className = "plan-day-header";
     const title = document.createElement("h4");
     title.innerText = day;
-    const slots = Number(availability[day] || 0);
+    
+    const items = plan[day] || [];
+    const slots = items.length;
+    
     const badge = document.createElement("span");
     badge.className = "plan-session-badge";
     badge.innerText = slots === 1 ? "1 session" : `${slots} sessions`;
     header.appendChild(title);
     header.appendChild(badge);
     dayCard.appendChild(header);
+    
     if (slots <= 0) {
       const empty = document.createElement("div");
       empty.className = "plan-empty";
@@ -409,15 +393,7 @@ function generateMergedWeeklyPlan() {
       container.appendChild(dayCard);
       return;
     }
-    const items = plan[day] || [];
-    if (items.length === 0) {
-      const empty = document.createElement("div");
-      empty.className = "plan-empty";
-      empty.innerText = "No upcoming tasks for this day";
-      dayCard.appendChild(empty);
-      container.appendChild(dayCard);
-      return;
-    }
+    
     const sessionList = document.createElement("div");
     sessionList.className = "plan-session-list";
     items.forEach((item, i) => {
@@ -427,6 +403,7 @@ function generateMergedWeeklyPlan() {
       const label = item.daysLeft !== null
         ? `${item.title} (1h) — ${priorityIcon(item.priority)} ${item.daysLeft}d left`
         : `${item.title} (1h)`;
+        
       generatedPlan[day].push({
         title: item.title || item.name || "Study Session",
         course: item.course || "",
@@ -446,8 +423,6 @@ function generateMergedWeeklyPlan() {
   renderStudySessionNotification();
 }
 
-
-/* === FR14 + FR15 Notifications === */
 function getProjectDeadlines() {
   return (
     JSON.parse(localStorage.getItem("deadlines") || "null") ||
@@ -505,7 +480,6 @@ function renderUpcomingReminder() {
   reminderBox.innerHTML = `🔔 You have ${upcoming.length} upcoming task(s).<br>${details}`;
 }
 
-
 function renderStudySessionNotification() {
   const box = document.getElementById("sessionNotification");
   if (!box) return;
@@ -561,7 +535,6 @@ function renderStudySessionNotification() {
   }
 }
 
-
 function loadSmartNotifications() {
   renderUpcomingReminder();
   renderStudySessionNotification();
@@ -570,8 +543,6 @@ function loadSmartNotifications() {
 document.addEventListener("DOMContentLoaded", function () {
   setTimeout(loadSmartNotifications, 300);
 });
-
-// ===== Auth Functions (Backend) =====
 
 async function signUpUser() {
   const name = document.getElementById("reg-username").value;
@@ -610,7 +581,7 @@ async function loginUser() {
     if (response.ok) {
       localStorage.setItem("token", data.token);
       localStorage.setItem("loggedInUser", data.user.name);
-window.location.href = "dashboard.html";
+      window.location.href = "dashboard.html";
     } else {
       alert("Error: " + data.error);
     }
