@@ -130,11 +130,6 @@ function getPriorityLabel(task) {
 function buildSmartPlan(deadlines, availability) {
   const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const upcoming = getUpcomingDeadlines(deadlines);
-  const taskBudget = {};
-  
-  upcoming.forEach(t => {
-    taskBudget[t.id] = getRequiredHours(t);
-  });
 
   const daySlots = {};
   days.forEach(d => {
@@ -145,48 +140,33 @@ function buildSmartPlan(deadlines, availability) {
   days.forEach(d => { plan[d] = []; });
 
   const today = startOfToday();
-  
-  const todayIndex = today.getDay(); 
-  
+  const todayIndex = today.getDay();
   const orderedDays = [];
   for (let i = 0; i < 7; i++) {
     orderedDays.push(days[(todayIndex + i) % 7]);
   }
 
   upcoming.forEach(task => {
-    let requiredHours = taskBudget[task.id] || 0;
+    let requiredHours = getRequiredHours(task);
     const due = parseLocalDate(task.date);
     const daysLeft = due ? Math.max(Math.ceil((due - today) / (1000 * 60 * 60 * 24)), 0) : 999;
     const priority = getPriorityLabel(task);
 
-    let attempts = 0;
-    while (requiredHours > 0 && attempts < 7) {
-      let allocatedInThisLoop = false;
-
-      for (let j = 0; j < orderedDays.length; j++) {
-        const day = orderedDays[j];
-
-        if (daySlots[day] > 0 && isTaskAvailableForPlanDay(task, day) && requiredHours > 0) {
-          plan[day].push({
-            course: task.course || "Study",
-            title: getTaskDisplayName(task),
-            date: task.date || "",
-            duration: "1h",
-            daysLeft: daysLeft,
-            priority: priority,
-            taskId: task.id
-          });
-
-          daySlots[day]--;
-          requiredHours--;
-          allocatedInThisLoop = true;
-        }
+    for (let j = 0; j < orderedDays.length && requiredHours > 0; j++) {
+      const day = orderedDays[j];
+      while (daySlots[day] > 0 && requiredHours > 0) {
+        plan[day].push({
+          course: task.course || "Study",
+          title: getTaskDisplayName(task),
+          date: task.date || "",
+          duration: "1h",
+          daysLeft: daysLeft,
+          priority: priority,
+          taskId: task.id
+        });
+        daySlots[day]--;
+        requiredHours--;
       }
-
-      if (!allocatedInThisLoop) {
-        break;
-      }
-      attempts++;
     }
   });
 
