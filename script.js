@@ -93,10 +93,7 @@ function isTaskAvailableForPlanDay(task, dayName) {
   if (!due) return false;
   const today = startOfToday();
   if (due < today) return false;
-  const weekDates = getCurrentWeekDates();
-  const planDate = weekDates[dayName];
-  if (!planDate) return false;
-  return planDate <= due;
+  return true;
 }
 
 function getTaskDisplayName(task) {
