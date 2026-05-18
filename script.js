@@ -137,11 +137,6 @@ function buildSmartPlan(deadlines, availability) {
   days.forEach(d => { plan[d] = []; });
 
   const today = startOfToday();
-  const todayIndex = today.getDay();
-  const orderedDays = [];
-  for (let i = 0; i < 7; i++) {
-    orderedDays.push(days[(todayIndex + i) % 7]);
-  }
 
   upcoming.forEach(task => {
     let requiredHours = getRequiredHours(task);
@@ -149,8 +144,8 @@ function buildSmartPlan(deadlines, availability) {
     const daysLeft = due ? Math.max(Math.ceil((due - today) / (1000 * 60 * 60 * 24)), 0) : 999;
     const priority = getPriorityLabel(task);
 
-    for (let j = 0; j < orderedDays.length && requiredHours > 0; j++) {
-      const day = orderedDays[j];
+    for (let j = 0; j < days.length && requiredHours > 0; j++) {
+      const day = days[j];
       while (daySlots[day] > 0 && requiredHours > 0) {
         plan[day].push({
           course: task.course || "Study",
